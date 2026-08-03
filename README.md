@@ -114,7 +114,7 @@ It is built for **authorized security testing, debugging, and learning**.
 ### Install & run from source
 
 ```bash
-git clone https://github.com/<your-username>/htninja.git
+git clone https://github.com/AyoubSirai/htninja.git
 cd htninja
 npm install
 npm start
