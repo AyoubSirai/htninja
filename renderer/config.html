@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self'; script-src 'self' img-src 'self' data:;"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HtNinja Configuration</title>
+  <link rel="stylesheet" href="fonts/roboto.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="config.css" />
+</head>
+<body class="config-page">
+  <form id="config-form" class="config-card">
+    <header class="config-header">
+      <img class="brand-mark" src="../icons/logo.png" alt="" width="36" height="36" />
+      <div>
+        <h1>Configuration</h1>
+        <p>Proxy listener and appearance</p>
+      </div>
+    </header>
+
+    <fieldset>
+      <legend>Proxy listener</legend>
+      <div class="config-grid">
+        <label>
+          Host
+          <input
+            id="config-host"
+            type="text"
+            maxlength="253"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="127.0.0.1"
+            required
+          />
+        </label>
+        <label>
+          Port
+          <input id="config-port" type="number" min="1" max="65535" required />
+        </label>
+      </div>
+      <p id="network-hint" class="config-hint">
+        Use 127.0.0.1 for local access, or a LAN interface address for remote clients.
+      </p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Theme</legend>
+      <div class="theme-options">
+        <label class="theme-option">
+          <input type="radio" name="theme" value="light" checked />
+          <span class="theme-swatch light-swatch"></span>
+          <span>Light</span>
+        </label>
+        <label class="theme-option">
+          <input type="radio" name="theme" value="dark" />
+          <span class="theme-swatch dark-swatch"></span>
+          <span>Dark</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <p id="config-error" class="config-error" role="alert"></p>
+
+    <footer class="config-actions">
+      <button id="config-cancel" class="btn btn-ghost" type="button">Cancel</button>
+      <button class="btn btn-primary" type="submit">Save</button>
+    </footer>
+  </form>
+
+  <script src="config.js"></script>
+</body>
+</html>

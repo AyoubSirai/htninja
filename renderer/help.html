@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:;"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HtNinja Help — JavaScript Automation Guide</title>
+  <link rel="stylesheet" href="fonts/roboto.css" />
+  <link rel="stylesheet" href="help.css" />
+</head>
+<body>
+  <header class="help-header">
+    <div class="help-brand">
+      <img class="help-logo" src="../icons/logo.png" alt="" width="32" height="32" />
+      <div>
+        <strong>HtNinja Help</strong>
+        <span>JavaScript Filter &amp; Response Transform Guide</span>
+      </div>
+    </div>
+    <div class="header-summary">Filter history or safely transform intercepted browser responses.</div>
+  </header>
+
+  <div class="help-layout">
+    <aside class="help-nav">
+      <strong>On this page</strong>
+      <nav>
+        <a href="#quick-start">Quick start</a>
+        <a href="#how-it-works">How filtering works</a>
+        <a href="#data-reference">req and res reference</a>
+        <a href="#syntax">Supported syntax</a>
+        <a href="#recipes">Filter recipes</a>
+        <a href="#bodies">Filtering bodies</a>
+        <a href="#functions">Full functions</a>
+        <a href="#response-transforms">Response transforms</a>
+        <a href="#errors">Errors and safety</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+      </nav>
+      <div class="nav-tip">
+        <strong>Remove a filter</strong>
+        <span>Clear the JS Hook Filter field and click Apply JS Filter.</span>
+      </div>
+    </aside>
+
+    <main class="help-content">
+      <section class="hero" id="quick-start">
+        <span class="eyebrow">Quick start</span>
+        <h1>Filter traffic with one JavaScript expression</h1>
+        <p>
+          Enter an expression in <strong>JS Hook Filter</strong>, then click
+          <strong>Apply JS Filter</strong>. Return a truthy value to keep an entry and a
+          falsy value to hide it.
+        </p>
+        <div class="example">
+          <div class="example-bar">
+            <span>Show only POST requests</span>
+            <button class="copy-button" data-copy="example-post" type="button">Copy</button>
+          </div>
+          <pre><code id="example-post">req.method === 'POST'</code></pre>
+        </div>
+        <div class="callout important">
+          <strong>The filter controls history visibility.</strong>
+          <span>It does not block, modify, or cancel network traffic. Use Hold Requests to intercept traffic before forwarding.</span>
+        </div>
+      </section>
+
+      <section id="how-it-works">
+        <span class="eyebrow">Behavior</span>
+        <h2>How filtering works</h2>
+        <ol class="steps">
+          <li><span>1</span><div><strong>HtNinja captures the request.</strong><p>The request is sent to the upstream server normally.</p></div></li>
+          <li><span>2</span><div><strong>The response completes.</strong><p>Both <code>req</code> and <code>res</code> are available to your predicate.</p></div></li>
+          <li><span>3</span><div><strong>Your expression is evaluated.</strong><p>A truthy result keeps the entry; a falsy result removes or hides it from history.</p></div></li>
+        </ol>
+        <p>
+          The compiled filter remains active for new traffic until you replace or clear it.
+          Choose <strong>Incoming requests only</strong> to leave existing history alone, or
+          <strong>All existing in-scope requests</strong> to re-evaluate completed rows that match
+          the Domain filter and remove those that fail the predicate.
+        </p>
+      </section>
+
+      <section id="data-reference">
+        <span class="eyebrow">Reference</span>
+        <h2>Available request and response data</h2>
+        <p>Header names are normalized to lowercase, so use keys such as <code>'content-type'</code> and <code>'user-agent'</code>.</p>
+
+        <h3><code>req</code> — request object</h3>
+        <div class="reference-table-wrap">
+          <table class="reference-table">
+            <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>req.id</code></td><td>string</td><td>Internal request identifier.</td></tr>
+              <tr><td><code>req.method</code></td><td>string</td><td>Uppercase HTTP method, such as <code>GET</code> or <code>POST</code>.</td></tr>
+              <tr><td><code>req.url</code></td><td>string</td><td>Complete request URL.</td></tr>
+              <tr><td><code>req.host</code></td><td>string</td><td>Hostname, and possibly its port.</td></tr>
+              <tr><td><code>req.path</code></td><td>string</td><td>Path and query string, such as <code>/api/users?page=2</code>.</td></tr>
+              <tr><td><code>req.headers</code></td><td>object</td><td>Normalized request headers.</td></tr>
+              <tr><td><code>req.body</code></td><td>string</td><td>Captured request body text.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><code>res</code> — response object</h3>
+        <div class="reference-table-wrap">
+          <table class="reference-table">
+            <thead><tr><th>Property</th><th>Type</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>res.status</code></td><td>number</td><td>HTTP response status code.</td></tr>
+              <tr><td><code>res.headers</code></td><td>object</td><td>Normalized response headers.</td></tr>
+              <tr><td><code>res.body</code></td><td>string</td><td>Captured and decoded response body text.</td></tr>
+              <tr><td><code>res.contentType</code></td><td>string</td><td>Response Content-Type header value.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="syntax">
+        <span class="eyebrow">Syntax</span>
+        <h2>Use normal JavaScript expressions</h2>
+        <p>
+          Comparisons, boolean operators, optional chaining, string methods, array methods,
+          regular expressions, and parenthesized expressions are supported.
+        </p>
+        <div class="syntax-grid">
+          <div><code>===</code><span>Strict equality</span></div>
+          <div><code>!==</code><span>Strict inequality</span></div>
+          <div><code>&amp;&amp;</code><span>Both conditions</span></div>
+          <div><code>||</code><span>Either condition</span></div>
+          <div><code>!</code><span>Negation</span></div>
+          <div><code>?.</code><span>Safe property access</span></div>
+          <div><code>.includes()</code><span>Contains text</span></div>
+          <div><code>/pattern/i.test()</code><span>Regular expression</span></div>
+        </div>
+        <div class="callout">
+          <strong>Prefer direct predicates.</strong>
+          <span>Do not write <code>return</code> by itself. Enter the expression directly, or use a complete function when you need statements.</span>
+        </div>
+      </section>
+
+      <section id="recipes">
+        <span class="eyebrow">Examples</span>
+        <h2>Common filter recipes</h2>
+        <div class="recipe-grid">
+          <article class="example">
+            <div class="example-bar"><span>POST or PUT requests</span><button class="copy-button" data-copy="ex-methods" type="button">Copy</button></div>
+            <pre><code id="ex-methods">req.method === 'POST' || req.method === 'PUT'</code></pre>
+          </article>
+          <article class="example">
+            <div class="example-bar"><span>API host contains a word</span><button class="copy-button" data-copy="ex-host" type="button">Copy</button></div>
+            <pre><code id="ex-host">req.host.toLowerCase().includes('api')</code></pre>
+          </article>
+          <article class="example">
+            <div class="example-bar"><span>Path begins with /api/</span><button class="copy-button" data-copy="ex-path" type="button">Copy</button></div>
+            <pre><code id="ex-path">req.path.startsWith('/api/')</code></pre>
+          </article>
+          <article class="example">
+            <div class="example-bar"><span>Errors only</span><button class="copy-button" data-copy="ex-errors" type="button">Copy</button></div>
+            <pre><code id="ex-errors">res.status >= 400</code></pre>
+          </article>
+          <article class="example">
+            <div class="example-bar"><span>JSON responses</span><button class="copy-button" data-copy="ex-json" type="button">Copy</button></div>
+            <pre><code id="ex-json">res.contentType.toLowerCase().includes('json')</code></pre>
+          </article>
+          <article class="example">
+            <div class="example-bar"><span>Authorization header exists</span><button class="copy-button" data-copy="ex-auth" type="button">Copy</button></div>
+            <pre><code id="ex-auth">Boolean(req.headers?.authorization)</code></pre>
+          </article>
+          <article class="example wide">
+            <div class="example-bar"><span>POST requests to an API that returned an error</span><button class="copy-button" data-copy="ex-combined" type="button">Copy</button></div>
+            <pre><code id="ex-combined">req.method === 'POST' &amp;&amp;
+req.host.includes('api.example.com') &amp;&amp;
+res.status >= 400</code></pre>
+          </article>
+          <article class="example wide">
+            <div class="example-bar"><span>Exclude images, fonts, and stylesheets</span><button class="copy-button" data-copy="ex-assets" type="button">Copy</button></div>
+            <pre><code id="ex-assets">!['image/', 'font/', 'text/css'].some(type =>
+    res.contentType.toLowerCase().includes(type)
+)</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section id="bodies">
+        <span class="eyebrow">Advanced</span>
+        <h2>Filter headers and bodies</h2>
+        <p>Use optional chaining and fallback values when a header may be missing.</p>
+        <div class="example">
+          <div class="example-bar"><span>Requests with a JSON Content-Type</span><button class="copy-button" data-copy="ex-request-json" type="button">Copy</button></div>
+          <pre><code id="ex-request-json">(req.headers?.['content-type'] || '').includes('application/json')</code></pre>
+        </div>
+        <div class="example">
+          <div class="example-bar"><span>Response body contains an error message</span><button class="copy-button" data-copy="ex-body-text" type="button">Copy</button></div>
+          <pre><code id="ex-body-text">res.body.toLowerCase().includes('invalid token')</code></pre>
+        </div>
+        <div class="example">
+          <div class="example-bar"><span>Safely inspect a JSON response body</span><button class="copy-button" data-copy="ex-body-json" type="button">Copy</button></div>
+          <pre><code id="ex-body-json">(req, res) => {
+    try {
+        const data = JSON.parse(res.body);
+        return data.success === false;
+    } catch {
+        return false;
+    }
+}</code></pre>
+        </div>
+        <div class="callout warning">
+          <strong>Large or binary bodies may be truncated or represented as text.</strong>
+          <span>Prefer URL, status, Content-Type, and headers when they can express the same filter.</span>
+        </div>
+      </section>
+
+      <section id="functions">
+        <span class="eyebrow">Advanced syntax</span>
+        <h2>Full predicate functions</h2>
+        <p>
+          Direct expressions are simplest. A complete arrow or traditional function is also
+          accepted when you need local variables, parsing, or <code>try/catch</code>.
+        </p>
+        <div class="example">
+          <div class="example-bar"><span>Arrow function</span><button class="copy-button" data-copy="ex-arrow" type="button">Copy</button></div>
+          <pre><code id="ex-arrow">(req, res) => {
+    const isApi = req.path.startsWith('/api/');
+    const isFailure = res.status >= 400;
+    return isApi &amp;&amp; isFailure;
+}</code></pre>
+        </div>
+        <div class="example">
+          <div class="example-bar"><span>Traditional function</span><button class="copy-button" data-copy="ex-function" type="button">Copy</button></div>
+          <pre><code id="ex-function">function filter(req, res) {
+    return req.method === 'DELETE' &amp;&amp; res.status === 204;
+}</code></pre>
+        </div>
+      </section>
+
+      <section id="response-transforms">
+        <span class="eyebrow">Response Interceptor</span>
+        <h2>Automatically modify requests and responses while browsing</h2>
+        <p>
+          Click <strong>Response Hook</strong>, enter the body of the transform, then click
+          <strong>Save &amp; Start Hook</strong>. HtNinja runs the same script on every
+          outbound request and every inbound response without pausing the browser. The code
+          and enabled state are saved across application restarts.
+        </p>
+        <p>
+          <strong>Only inject the hook into in-scope domains</strong> is enabled by default.
+          When selected, the hook only runs for hosts matching the main window’s Domain filter.
+          Clear the option to run it for every domain. The editor supports normal JavaScript
+          syntax highlighting, and Tab indents by four spaces.
+        </p>
+        <div class="example">
+          <div class="example-bar"><span>Clear the request body</span><button class="copy-button" data-copy="ex-transform-req-body" type="button">Copy</button></div>
+          <pre><code id="ex-transform-req-body">req.body = '';</code></pre>
+        </div>
+        <div class="example">
+          <div class="example-bar"><span>Only modify matching API responses</span><button class="copy-button" data-copy="ex-transform-matching" type="button">Copy</button></div>
+          <pre><code id="ex-transform-matching">if (!req.path.startsWith('/api/')) return;
+res.body = res.body.replaceAll('old', 'new');</code></pre>
+        </div>
+        <div class="callout important">
+          <strong>Manual inspection is still available.</strong>
+          <span>Use Pause Responses only when you deliberately want the browser to wait while you edit an individual response.</span>
+        </div>
+
+        <h3>Transform input and output</h3>
+        <p>
+          Write the code that would go inside <code>(req, res) =&gt; { ... }</code>.
+          <code>req</code>, <code>res</code>, <code>phase</code>
+          (<code>'request'</code> or <code>'response'</code>), and <code>pause</code>
+          are already available.
+          Mutate <code>req</code> to change what is sent upstream. Mutate <code>res</code>
+          to change what the browser receives. Returning nothing applies the mutated objects.
+          Call <code>pause()</code> to enable Hold Requests (including the current
+          request when called during the request phase). Call <code>req.abort()</code>
+          or <code>req.abort('close')</code> to cancel the current request.
+        </p>
+        <div class="data-grid">
+          <article>
+            <h3><code>req</code></h3>
+            <dl>
+              <div><dt>method</dt><dd>Request method</dd></div>
+              <div><dt>url / host / path</dt><dd>Target location</dd></div>
+              <div><dt>headers</dt><dd>Request headers</dd></div>
+              <div><dt>body</dt><dd>Captured request body</dd></div>
+              <div><dt>abort()</dt><dd>Cancel this request</dd></div>
+            </dl>
+          </article>
+          <article>
+            <h3><code>res</code></h3>
+            <dl>
+              <div><dt>status</dt><dd>HTTP status code</dd></div>
+              <div><dt>headers</dt><dd>Lowercase response header object</dd></div>
+              <div><dt>body</dt><dd>Decoded response body text</dd></div>
+              <div><dt>contentType</dt><dd>Original Content-Type</dd></div>
+            </dl>
+          </article>
+        </div>
+
+        <h3>Control functions</h3>
+        <p>
+          These helpers are available inside the Response Hook. Invalid hooks are
+          compile- and dry-run-checked when you click <strong>Save &amp; Start Hook</strong>;
+          HtNinja will not save or start a hook that fails validation.
+        </p>
+        <div class="reference-table-wrap">
+          <table class="reference-table">
+            <thead><tr><th>API</th><th>Phase</th><th>Effect</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code>pause()</code></td>
+                <td>request or response</td>
+                <td>
+                  Turns on <strong>Hold Requests</strong> for all traffic. When called during
+                  the request phase, the current request is held as well. Release held
+                  requests from the toolbar when you are ready.
+                </td>
+              </tr>
+              <tr>
+                <td><code>req.abort()</code></td>
+                <td>request or response</td>
+                <td>
+                  Cancels the current transaction with a TCP reset (same as returning
+                  <code>'reset'</code>).
+                </td>
+              </tr>
+              <tr>
+                <td><code>req.abort('close')</code></td>
+                <td>request or response</td>
+                <td>Cancels the current transaction by closing the connection cleanly.</td>
+              </tr>
+              <tr>
+                <td><code>return 'reset'</code></td>
+                <td>request or response</td>
+                <td>Same as <code>req.abort()</code> — abort with a connection reset.</td>
+              </tr>
+              <tr>
+                <td><code>return 'close'</code></td>
+                <td>request or response</td>
+                <td>Same as <code>req.abort('close')</code> — abort by closing the socket.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="example">
+          <div class="example-bar"><span>Edit the request and the response together</span><button class="copy-button" data-copy="ex-transform-both" type="button">Copy</button></div>
+          <pre><code id="ex-transform-both">if (phase === 'request') {
+  req.body = '';
+  req.headers['x-htninja'] = '1';
+  return;
+}
+res.body = res.body.replaceAll('Production', 'HtNinja');</code></pre>
+        </div>
+
+        <div class="example">
+          <div class="example-bar"><span>Replace text in the response body</span><button class="copy-button" data-copy="ex-transform-replace" type="button">Copy</button></div>
+          <pre><code id="ex-transform-replace">res.body = res.body.replaceAll('Production', 'HtNinja');</code></pre>
+        </div>
+
+        <div class="example">
+          <div class="example-bar"><span>Change status, headers, and JSON body</span><button class="copy-button" data-copy="ex-transform-json" type="button">Copy</button></div>
+          <pre><code id="ex-transform-json">const data = JSON.parse(res.body);
+data.role = 'admin';
+data.debug = true;
+
+res.status = 201;
+res.headers['content-type'] = 'application/json; charset=utf-8';
+res.headers['x-htninja-modified'] = 'yes';
+res.body = JSON.stringify(data, null, 4);
+return res;</code></pre>
+        </div>
+
+        <div class="example">
+          <div class="example-bar"><span>Remove a response header</span><button class="copy-button" data-copy="ex-transform-header" type="button">Copy</button></div>
+          <pre><code id="ex-transform-header">delete res.headers['content-security-policy'];
+delete res.headers['x-frame-options'];
+return res;</code></pre>
+        </div>
+
+        <div class="example">
+          <div class="example-bar"><span>Abort the response</span><button class="copy-button" data-copy="ex-transform-abort" type="button">Copy</button></div>
+          <pre><code id="ex-transform-abort">if (req.path.startsWith('/api/private')) return 'reset';
+return res;</code></pre>
+        </div>
+
+        <div class="example">
+          <div class="example-bar"><span>Pause all traffic from the hook</span><button class="copy-button" data-copy="ex-transform-pause" type="button">Copy</button></div>
+          <pre><code id="ex-transform-pause">if (req.path.includes('/admin')) {
+  pause();
+}
+if (req.path.includes('/blocked')) {
+  req.abort();
+}</code></pre>
+        </div>
+
+        <div class="callout warning">
+          <strong>Content-Length and Transfer-Encoding are recalculated.</strong>
+          <span>HtNinja removes those values from edited responses. Transform scripts run in the same isolated, time-limited sandbox as filters and cannot use Node.js APIs.</span>
+        </div>
+      </section>
+
+      <section id="errors">
+        <span class="eyebrow">Safety</span>
+        <h2>Compile errors, runtime errors, and sandbox limits</h2>
+        <ul class="feature-list">
+          <li><strong>Compile errors</strong><span>Invalid JavaScript is rejected when you click Apply JS Filter or Save &amp; Start Hook.</span></li>
+          <li><strong>Hook dry-run</strong><span>Save &amp; Start Hook also executes the script once against sample request/response data. Failures are shown in the dialog and the hook is not saved or started.</span></li>
+          <li><strong>Runtime errors</strong><span>An error while evaluating live traffic is shown in the UI. Filter failures keep the entry; hook failures leave that side unmodified.</span></li>
+          <li><strong>100 ms timeout</strong><span>Long-running predicates are stopped to keep the proxy responsive.</span></li>
+          <li><strong>50,000-character maximum</strong><span>Oversized scripts are rejected.</span></li>
+          <li><strong>Isolated sandbox</strong><span>Node.js APIs such as <code>require</code>, <code>process</code>, and filesystem access are unavailable.</span></li>
+          <li><strong>Read-only copies</strong><span>The filter receives serialized request and response data, not live proxy objects.</span></li>
+        </ul>
+      </section>
+
+      <section id="troubleshooting">
+        <span class="eyebrow">Troubleshooting</span>
+        <h2>When a filter does not match</h2>
+        <div class="troubleshooting">
+          <article><strong>Check letter casing</strong><p>Methods are uppercase. Normalize arbitrary text with <code>.toLowerCase()</code>.</p></article>
+          <article><strong>Use lowercase header keys</strong><p>Write <code>req.headers['user-agent']</code>, not <code>req.headers['User-Agent']</code>.</p></article>
+          <article><strong>Guard optional values</strong><p>Use <code>req.headers?.referer || ''</code> before calling string methods.</p></article>
+          <article><strong>Remember response timing</strong><p>The predicate runs after the response completes, not when the request first arrives.</p></article>
+          <article><strong>Capture new traffic</strong><p>Applying a filter does not retroactively re-run it over completed entries already in history.</p></article>
+          <article><strong>Reset quickly</strong><p>Clear the field and apply it again to allow every new completed request.</p></article>
+        </div>
+      </section>
+
+      <footer class="help-footer">
+        <strong>HtNinja JavaScript Automation Guide</strong>
+        <span>Filter traffic history and safely transform intercepted responses.</span>
+      </footer>
+    </main>
+  </div>
+  <script src="help.js"></script>
+</body>
+</html>

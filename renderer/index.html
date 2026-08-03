@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data: blob:; connect-src 'self';"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HtNinja — HTTPS Traffic Inspector</title>
+  <link rel="stylesheet" href="fonts/roboto.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Top control bar -->
+    <header class="toolbar" id="toolbar">
+      <div class="brand">
+        <img class="brand-mark" src="../icons/logo.png" alt="" width="22" height="22" />
+        <span class="brand-name">HtNinja</span>
+        <span class="brand-sub">Proxy Inspector</span>
+      </div>
+
+      <div class="toolbar-group status-group">
+        <span id="status-light" class="status-light stopped" title="Proxy stopped"></span>
+        <span id="status-label" class="status-label">Stopped</span>
+        <span id="proxy-endpoint" class="proxy-endpoint">127.0.0.1:8080</span>
+      </div>
+
+      <div class="toolbar-actions">
+        <div class="toolbar-cluster" role="group" aria-label="Proxy controls">
+          <button id="btn-toggle" class="btn btn-primary" type="button">Start Proxy</button>
+          <button
+            id="btn-hold"
+            class="btn"
+            type="button"
+            disabled
+            title="Keep new proxy requests waiting until released"
+          >Hold</button>
+          <button
+            id="btn-intercept-response"
+            class="btn"
+            type="button"
+            disabled
+            title="Pause upstream responses before they reach the browser"
+          >Pause Resp.</button>
+          <button
+            id="btn-response-hook"
+            class="btn"
+            type="button"
+            title="Automatically transform matching responses without pausing"
+          >Hook</button>
+        </div>
+        <div class="toolbar-cluster" role="group" aria-label="Browsers">
+          <button id="btn-chrome" class="btn" type="button" disabled>Chrome</button>
+          <button id="btn-firefox" class="btn" type="button" disabled>Firefox</button>
+        </div>
+        <div class="toolbar-cluster" role="group" aria-label="Tools">
+          <button id="btn-open-repeater" class="btn" type="button">Repeater</button>
+          <button id="btn-search" class="btn" type="button">Search</button>
+          <button id="btn-export-ca" class="btn" type="button">Export CA</button>
+          <button id="btn-config" class="btn" type="button" title="Proxy and appearance settings">Settings</button>
+          <button id="btn-help" class="btn" type="button" title="Open documentation">Help</button>
+          <button id="btn-clear" class="btn btn-ghost" type="button">Clear</button>
+        </div>
+      </div>
+
+    </header>
+
+    <!-- Filters row -->
+    <section class="filters" id="filters">
+      <label class="filter-field">
+        Domain
+        <input
+          id="filter-domain"
+          type="text"
+          placeholder="go, api.example.com, or *.google.com"
+          spellcheck="false"
+        />
+      </label>
+      <label class="filter-field">
+        Content-Type
+        <input
+          id="filter-ctype"
+          type="text"
+          list="ctype-presets"
+          placeholder="application/json, text/html, image/*"
+          spellcheck="false"
+        />
+        <datalist id="ctype-presets">
+          <option value="application/json"></option>
+          <option value="text/html"></option>
+          <option value="text/css"></option>
+          <option value="application/javascript"></option>
+          <option value="image/*"></option>
+          <option value="font/*"></option>
+          <option value="multipart/form-data"></option>
+        </datalist>
+      </label>
+      <label class="filter-field filter-js">
+        JS Hook Filter
+        <textarea
+          id="filter-js"
+          rows="2"
+          spellcheck="false"
+          placeholder="req.method === 'POST' && res.status === 200"
+        ></textarea>
+        <label class="filter-js-scope">
+          Apply to
+          <select id="filter-js-apply" aria-label="JS filter apply scope">
+            <option value="incoming">Incoming requests only</option>
+            <option value="existing">All existing in-scope requests</option>
+          </select>
+        </label>
+      </label>
+      <div class="filter-actions">
+        <button id="btn-apply-js" class="btn btn-sm" type="button">Apply JS Filter</button>
+        <span id="filter-js-status" class="filter-js-status"></span>
+        <span id="visible-count" class="visible-count">0 / 0</span>
+      </div>
+    </section>
+
+    <!-- Split panes -->
+    <main class="workspace">
+      <section class="pane pane-table" id="pane-table">
+        <div class="table-wrap">
+          <table class="traffic-table" id="traffic-table">
+            <thead>
+              <tr>
+                <th class="col-seq">#</th>
+                <th class="col-method">Method</th>
+                <th class="col-host">Host</th>
+                <th class="col-path">Path</th>
+                <th class="col-status">Status</th>
+                <th class="col-ctype">Content-Type</th>
+                <th class="col-size">Size</th>
+                <th class="col-time">Time</th>
+              </tr>
+            </thead>
+            <tbody id="traffic-body"></tbody>
+          </table>
+          <div id="empty-state" class="empty-state">
+            Start the proxy, export &amp; trust the Root CA, then launch Chrome or Firefox.
+          </div>
+        </div>
+      </section>
+
+      <div class="splitter" id="splitter" role="separator" aria-orientation="horizontal"></div>
+
+      <section class="pane pane-inspector" id="pane-inspector">
+        <div class="inspector-tabs" role="tablist">
+          <div class="inspector-tab-group" role="presentation">
+            <button class="tab active" data-panel="request" role="tab" type="button">Request</button>
+            <button class="tab" data-panel="response" role="tab" type="button">Response</button>
+          </div>
+          <div class="inspector-actions">
+            <button id="btn-edit-held" class="btn btn-sm inspector-action hidden-action" type="button">Edit Held</button>
+            <button id="btn-edit-response" class="btn btn-sm inspector-action hidden-action" type="button">Edit Response</button>
+            <button id="btn-send-repeater" class="btn btn-sm inspector-action" type="button">Send to Repeater</button>
+          </div>
+          <div class="inspector-meta" id="inspector-meta"></div>
+        </div>
+
+        <div class="inspector-subtabs" id="subtabs-request">
+          <div class="subtab-group" role="presentation">
+            <button class="subtab active" data-view="raw" type="button">Raw</button>
+            <button class="subtab" data-view="headers" type="button">Headers</button>
+            <button class="subtab" data-view="body" type="button">Body</button>
+          </div>
+        </div>
+        <div class="inspector-subtabs hidden" id="subtabs-response">
+          <div class="subtab-group" role="presentation">
+            <button class="subtab active" data-view="raw" type="button">Raw</button>
+            <button class="subtab" data-view="headers" type="button">Headers</button>
+            <button class="subtab" data-view="body" type="button">Body</button>
+          </div>
+        </div>
+        <div class="inspector-subtabs hidden" id="subtabs-repeater">
+          <div class="inspector-actions">
+            <button id="btn-load-repeater" class="btn btn-sm" type="button" title="Load selected history item into the editor">Load Selected</button>
+            <button id="btn-resend" class="btn btn-sm btn-primary" type="button">Resend</button>
+          </div>
+          <span id="repeater-status" class="repeater-status"></span>
+        </div>
+
+        <div class="inspector-content" id="inspector-content">
+          <pre id="inspector-raw" class="code-block"></pre>
+          <div id="inspector-headers" class="headers-view hidden"></div>
+          <pre id="inspector-body" class="code-block hidden"></pre>
+
+          <div id="repeater-editor" class="repeater-editor hidden">
+            <div class="repeater-row">
+              <label class="repeater-field method-field">
+                Method
+                <input id="repeater-method" type="text" list="method-presets" spellcheck="false" />
+                <datalist id="method-presets">
+                  <option value="GET"></option>
+                  <option value="POST"></option>
+                  <option value="PUT"></option>
+                  <option value="PATCH"></option>
+                  <option value="DELETE"></option>
+                  <option value="HEAD"></option>
+                  <option value="OPTIONS"></option>
+                </datalist>
+              </label>
+              <label class="repeater-field url-field">
+                URL
+                <input id="repeater-url" type="text" spellcheck="false" placeholder="https://example.com/api" />
+              </label>
+            </div>
+            <label class="repeater-field">
+              Headers
+              <textarea id="repeater-headers" spellcheck="false" placeholder="Header-Name: value"></textarea>
+            </label>
+            <label class="repeater-field body-field">
+              Body
+              <textarea id="repeater-body" spellcheck="false" placeholder="Request body"></textarea>
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="statusbar" id="statusbar">
+      <span id="toast" class="toast"></span>
+      <span class="spacer"></span>
+      <span id="footer-hint">Listening disabled</span>
+    </footer>
+  </div>
+
+  <dialog id="held-editor-dialog" class="held-editor-dialog">
+    <form id="held-editor-form" method="dialog">
+      <header class="held-editor-header">
+        <div>
+          <strong>Edit held request</strong>
+          <span>The browser remains waiting until this request is forwarded.</span>
+        </div>
+        <button id="held-editor-close" class="dialog-close" type="button" aria-label="Close">×</button>
+      </header>
+
+      <div class="held-editor-grid">
+        <label class="held-field held-method">
+          Method
+          <input id="held-method" type="text" spellcheck="false" />
+        </label>
+        <label class="held-field">
+          URL
+          <input id="held-url" type="text" spellcheck="false" />
+        </label>
+      </div>
+
+      <label class="held-field">
+        Headers
+        <textarea id="held-headers" spellcheck="false"></textarea>
+      </label>
+
+      <label class="held-field held-body">
+        Body
+        <textarea id="held-body" spellcheck="false"></textarea>
+      </label>
+
+      <p id="held-editor-error" class="held-editor-error" role="alert"></p>
+
+      <footer class="held-editor-actions">
+        <button id="held-cancel" class="btn btn-ghost" type="button">Cancel</button>
+        <button id="held-save" class="btn" type="button">Save &amp; Keep Held</button>
+        <button id="held-forward" class="btn btn-primary" type="button">Save &amp; Forward Now</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="response-editor-dialog" class="held-editor-dialog response-editor-dialog">
+    <form id="response-editor-form" method="dialog">
+      <header class="held-editor-header">
+        <div>
+          <strong>Intercepted response</strong>
+          <span>The browser is waiting. Edit, transform, forward, or abort this response.</span>
+        </div>
+        <button id="response-editor-close" class="dialog-close" type="button" aria-label="Close">×</button>
+      </header>
+
+      <div class="held-editor-grid response-status-grid">
+        <label class="held-field held-method">
+          Status
+          <input id="response-status" type="number" min="100" max="999" />
+        </label>
+        <label class="held-field">
+          Request
+          <input id="response-request-url" type="text" readonly />
+        </label>
+      </div>
+
+      <label class="held-field">
+        Response headers
+        <textarea id="response-headers" spellcheck="false"></textarea>
+      </label>
+
+      <label class="held-field held-body">
+        Response body
+        <textarea id="response-body" spellcheck="false"></textarea>
+      </label>
+
+      <fieldset class="response-tool">
+        <legend>Replace text</legend>
+        <div class="response-replace-grid">
+          <input id="response-find-text" type="text" placeholder="Find text or pattern" />
+          <input id="response-replace-text" type="text" placeholder="Replacement" />
+          <label><input id="response-replace-case" type="checkbox" /> Case sensitive</label>
+          <label><input id="response-replace-regex" type="checkbox" /> RegEx</label>
+          <button id="response-replace-all" class="btn btn-sm" type="button">Replace All</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="response-tool">
+        <legend>JavaScript response transform</legend>
+        <textarea
+          id="response-transform-js"
+          class="response-transform-js"
+          spellcheck="false"
+          placeholder="res.body = res.body.replaceAll('old', 'new');
+return res;"
+        ></textarea>
+        <div class="response-transform-actions">
+          <button id="response-transform-help" class="btn btn-ghost btn-sm" type="button">Documentation</button>
+          <button id="response-transform-apply" class="btn btn-sm" type="button">Run JS on Response</button>
+        </div>
+      </fieldset>
+
+      <p id="response-editor-error" class="held-editor-error" role="alert"></p>
+
+      <footer class="held-editor-actions">
+        <button id="response-editor-cancel" class="btn btn-ghost" type="button">Cancel</button>
+        <button id="response-save" class="btn" type="button">Save &amp; Keep Held</button>
+        <button id="response-abort" class="btn btn-danger" type="button">Abort (Reset)</button>
+        <button id="response-forward" class="btn btn-primary" type="button">Save &amp; Forward</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="response-hook-dialog" class="held-editor-dialog response-hook-dialog">
+    <form id="response-hook-form" method="dialog">
+      <header class="held-editor-header">
+        <div>
+          <strong>Automatic Response Hook</strong>
+          <span>Configure once, then transform every matching response without pausing the browser.</span>
+        </div>
+        <button id="response-hook-close" class="dialog-close" type="button" aria-label="Close">×</button>
+      </header>
+
+      <div class="callout response-hook-note">
+        Write the body directly — <code>req</code>, <code>res</code>, <code>phase</code>, and <code>pause</code> are already in scope.
+        Mutate <code>req</code> to change the outbound request (for example <code>req.body = ''</code>)
+        and mutate <code>res</code> to change the browser response. Call <code>pause()</code> to hold all
+        subsequent requests (and the current one in the request phase), or <code>req.abort()</code> to
+        cancel the current request. Save &amp; Start validates the script first and will not save a broken hook.
+      </div>
+
+      <label class="response-hook-scope">
+        <input id="response-hook-in-scope" type="checkbox" checked />
+        Only inject the hook into in-scope domains from the main Domain filter
+      </label>
+
+      <label class="held-field held-body">
+        JavaScript transform
+        <div
+          id="response-hook-source"
+          class="response-hook-code-editor"
+        ></div>
+      </label>
+
+      <p id="response-hook-status" class="held-editor-error" role="status"></p>
+
+      <footer class="held-editor-actions">
+        <button id="response-hook-help" class="btn btn-ghost" type="button">Documentation</button>
+        <button id="response-hook-disable" class="btn btn-danger" type="button">Stop Hook</button>
+        <button id="response-hook-start" class="btn btn-primary" type="button">Save &amp; Start Hook</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="repeaterEditor.bundle.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

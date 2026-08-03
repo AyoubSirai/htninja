@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'nonce-smartnet'; script-src 'self';"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HtNinja Repeater</title>
+  <link rel="stylesheet" href="fonts/roboto.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="repeater.css" />
+</head>
+<body class="repeater-window">
+  <div class="burp-shell">
+    <header class="burp-header">
+      <div class="burp-brand">
+        <img class="burp-logo" src="../icons/logo.png" alt="" width="28" height="28" />
+        <div>
+          <strong>HtNinja</strong>
+          <span>Repeater</span>
+        </div>
+      </div>
+      <div class="burp-actions">
+        <button id="new-tab" class="burp-btn" type="button" title="New request (Ctrl+T)">New</button>
+        <button id="duplicate-tab" class="burp-btn" type="button">Duplicate</button>
+        <span id="session-count" class="session-count">0 requests</span>
+      </div>
+    </header>
+
+    <nav class="request-tabs-bar">
+      <div id="request-tabs" class="request-tabs" role="tablist"></div>
+      <button id="new-tab-plus" class="tab-plus" type="button" title="New request">+</button>
+    </nav>
+
+    <section class="request-controls">
+      <button id="send-request" class="send-btn" type="button" title="Send request (Ctrl+Enter)">
+        Send
+      </button>
+      <select id="request-method" aria-label="HTTP method">
+        <option>GET</option>
+        <option>POST</option>
+        <option>PUT</option>
+        <option>PATCH</option>
+        <option>DELETE</option>
+        <option>HEAD</option>
+        <option>OPTIONS</option>
+      </select>
+      <input
+        id="request-url"
+        type="text"
+        spellcheck="false"
+        autocomplete="off"
+        placeholder="https://example.com/path"
+        aria-label="Request URL"
+      />
+      <span id="send-state" class="send-state">Ready</span>
+      <button
+        id="copy-as-fetch"
+        class="burp-btn copy-as-fetch-btn"
+        type="button"
+        title="Show JavaScript fetch() for this request"
+        aria-label="Show JavaScript fetch code"
+      >
+        <svg class="javascript-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30"></rect>
+          <text x="16" y="23">JS</text>
+        </svg>
+      </button>
+    </section>
+
+    <main class="repeater-workspace">
+      <section class="message-panel request-panel">
+        <header class="message-title">
+          <strong>Request</strong>
+          <span class="message-mode">Raw HTTP</span>
+        </header>
+        <div class="request-code-editor">
+          <div id="request-raw" class="message-editor"></div>
+        </div>
+        <div class="message-find" data-find="request">
+          <input id="request-find" type="search" placeholder="Search request" autocomplete="off" />
+          <button id="request-find-prev" type="button" title="Previous match">↑</button>
+          <button id="request-find-next" type="button" title="Next match">↓</button>
+          <label><input id="request-find-case" type="checkbox" /> Aa</label>
+          <label><input id="request-find-regex" type="checkbox" /> .* </label>
+          <span id="request-find-count">0 / 0</span>
+        </div>
+      </section>
+
+      <div class="vertical-divider" aria-hidden="true"></div>
+
+      <section class="message-panel response-panel">
+        <header class="message-title">
+          <div class="message-title-left">
+            <strong>Response</strong>
+            <div class="message-tabs" data-group="response">
+              <button class="message-tab active" data-view="pretty" type="button">Pretty</button>
+              <button class="message-tab" data-view="raw" type="button">Raw</button>
+              <button class="message-tab" data-view="headers" type="button">Headers</button>
+            </div>
+          </div>
+          <span id="response-meta" class="response-meta">No response</span>
+        </header>
+        <pre id="response-output" class="response-output">Click Send to issue this request.</pre>
+        <div class="message-find" data-find="response">
+          <input id="response-find" type="search" placeholder="Search response" autocomplete="off" />
+          <button id="response-find-prev" type="button" title="Previous match">↑</button>
+          <button id="response-find-next" type="button" title="Next match">↓</button>
+          <label><input id="response-find-case" type="checkbox" /> Aa</label>
+          <label><input id="response-find-regex" type="checkbox" /> .* </label>
+          <span id="response-find-count">0 / 0</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="burp-footer">
+      <span>Ctrl+Enter Send</span>
+      <span>Ctrl+T New tab</span>
+      <span>Ctrl+W Close tab</span>
+      <span class="footer-spacer"></span>
+      <span id="save-state">Saved</span>
+    </footer>
+  </div>
+
+  <dialog id="fetch-dialog" class="held-editor-dialog fetch-dialog">
+    <form id="fetch-dialog-form" method="dialog">
+      <header class="held-editor-header">
+        <div>
+          <strong>JavaScript fetch()</strong>
+          <span>Equivalent browser code for the current Repeater request.</span>
+        </div>
+        <button id="fetch-dialog-close" class="dialog-close" type="button" aria-label="Close">×</button>
+      </header>
+      <div id="fetch-code" class="fetch-code"></div>
+      <p id="fetch-dialog-status" class="held-editor-error" role="status"></p>
+      <footer class="held-editor-actions">
+        <button id="fetch-dialog-cancel" class="btn btn-ghost" type="button">Close</button>
+        <button id="fetch-dialog-copy" class="btn btn-primary" type="button">Copy to clipboard</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="repeaterEditor.bundle.js"></script>
+  <script src="repeater.js"></script>
+</body>
+</html>

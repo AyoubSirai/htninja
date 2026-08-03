@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self'; script-src 'self' img-src 'self' data:;"
+  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HtNinja Advanced Search</title>
+  <link rel="stylesheet" href="fonts/roboto.css" />
+  <link rel="stylesheet" href="search.css" />
+</head>
+<body>
+  <div class="search-shell">
+    <header class="search-header">
+      <div class="search-brand">
+        <img class="search-logo" src="../icons/logo.png" alt="" width="28" height="28" />
+        <div><strong>Advanced Search</strong><span>Find interesting proxy traffic</span></div>
+      </div>
+      <button id="open-filter-help" class="secondary-button" type="button">JS Filter Help</button>
+    </header>
+
+    <main class="search-workspace">
+      <section class="query-panel">
+        <form id="search-form">
+          <div class="query-row">
+            <label class="query-field">
+              Pattern
+              <input
+                id="search-pattern"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Text or regular expression"
+              />
+            </label>
+            <label>
+              Match type
+              <select id="search-mode">
+                <option value="text">Plain text</option>
+                <option value="regex">Regular expression</option>
+              </select>
+            </label>
+            <label class="case-option">
+              <input id="case-sensitive" type="checkbox" />
+              Case sensitive
+            </label>
+          </div>
+
+          <fieldset class="scope-fieldset">
+            <legend>Search in</legend>
+            <label class="scope-all"><input id="scope-all" type="checkbox" checked /> Anything</label>
+            <label><input name="scope" value="url" type="checkbox" checked /> URLs, host and path</label>
+            <label><input name="scope" value="metadata" type="checkbox" checked /> Method, status and type</label>
+            <label><input name="scope" value="requestHeaders" type="checkbox" checked /> Request headers</label>
+            <label><input name="scope" value="requestBody" type="checkbox" checked /> Request body</label>
+            <label><input name="scope" value="responseHeaders" type="checkbox" checked /> Response headers</label>
+            <label><input name="scope" value="responseBody" type="checkbox" checked /> Response body</label>
+          </fieldset>
+
+          <label class="domain-scope-option">
+            <input id="in-scope-only" type="checkbox" />
+            <span>
+              Search only domains in the main Domain filter
+              <small id="domain-scope-value">Current scope: all domains</small>
+            </span>
+          </label>
+
+          <label class="js-field">
+            <span>
+              Optional JavaScript condition
+              <small>Applied together with the pattern. Uses the same <code>req</code> and <code>res</code> objects as JS Hook Filter.</small>
+            </span>
+            <textarea
+              id="js-condition"
+              rows="3"
+              spellcheck="false"
+              placeholder="req.method === 'POST' && res.status >= 400"
+            ></textarea>
+          </label>
+
+          <div class="search-actions">
+            <button id="run-search" class="primary-button" type="submit">Search History</button>
+            <button id="focus-matches" class="secondary-button" type="button" disabled>Focus Matches</button>
+            <button id="show-all" class="secondary-button" type="button" disabled>Show All</button>
+            <button id="clear-search" class="ghost-button" type="button">Clear Search</button>
+            <span id="search-status" class="search-status">Ready</span>
+          </div>
+        </form>
+      </section>
+
+      <section class="results-panel">
+        <header class="results-header">
+          <div>
+            <strong>Results</strong>
+            <span id="result-summary">Run a search to inspect captured requests.</span>
+          </div>
+          <span class="focus-note">Matching rows are highlighted in HTTP History.</span>
+        </header>
+        <div id="results-empty" class="results-empty">
+          Search URLs, headers, bodies, metadata, or combine a pattern with JavaScript.
+        </div>
+        <div id="search-results" class="search-results" role="list"></div>
+      </section>
+    </main>
+  </div>
+  <script src="search.js"></script>
+</body>
+</html>

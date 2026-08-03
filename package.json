@@ -1,0 +1,84 @@
+{
+  "name": "htninja",
+  "version": "1.0.0",
+  "description": "Desktop HTTPS traffic inspector and MITM proxy — Burp Suite-style HTTP History & Proxy Interceptor",
+  "main": "main.js",
+  "author": "HtNinja",
+  "license": "MIT",
+  "scripts": {
+    "build:renderer": "esbuild renderer/repeaterEditor.entry.js --bundle --minify --format=iife --platform=browser --outfile=renderer/repeaterEditor.bundle.js",
+    "prestart": "npm run build:renderer",
+    "start": "electron .",
+    "predist": "npm run build:renderer",
+    "dist": "electron-builder --win portable --x64",
+    "dist:dir": "electron-builder --win dir --x64",
+    "smoke": "node scripts/smoke-test.js",
+    "test:response-interceptor": "node scripts/response-interceptor-test.js",
+    "test:response-interceptor-ui": "electron scripts/response-interceptor-ui-test.js",
+    "test:search": "node scripts/advanced-search-test.js",
+    "test:repeater-ui": "npm run build:renderer && electron scripts/repeater-editor-test.js"
+  },
+  "dependencies": {
+    "mockttp": "^3.15.5"
+  },
+  "devDependencies": {
+    "@codemirror/commands": "^6.10.4",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.7",
+    "electron": "^33.2.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "build": {
+    "appId": "com.htninja.app",
+    "productName": "HtNinja",
+    "copyright": "Copyright © HtNinja",
+    "directories": {
+      "output": "dist",
+      "buildResources": "icons"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "proxy/**/*",
+      "renderer/**/*",
+      "icons/**/*",
+      "!renderer/repeaterEditor.entry.js",
+      "!**/*.map",
+      "!**/README*",
+      "!**/CHANGELOG*",
+      "!**/test/**",
+      "!**/tests/**",
+      "!**/*.md"
+    ],
+    "asar": true,
+    "compression": "maximum",
+    "removePackageScripts": true,
+    "removePackageKeywords": true,
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icons/logo.png",
+      "artifactName": "${productName}-${version}-win-${arch}.${ext}",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
