@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Desktop HTTPS traffic inspector &amp; MITM proxy</strong><br />
-  Capture, hold, edit, search, and resend HTTP(S) traffic — inspired by Burp Suite’s Proxy and HTTP History.
+  Capture, hold, edit, search, and resend HTTP(S) traffic.
 </p>
 
 <p align="center">
@@ -23,7 +23,7 @@
 
 **HtNinja** is a local man-in-the-middle (MITM) proxy packaged as a desktop app. Point a browser or any HTTP-aware client at it, trust the generated Root CA, and inspect live HTTPS traffic in a clean history table with request/response viewers.
 
-It is built for **authorized security testing, debugging, and learning** — when you need Burp-style interception without leaving a lightweight Electron app.
+It is built for **authorized security testing, debugging, and learning**.
 
 | Capability | What you get |
 |---|---|
