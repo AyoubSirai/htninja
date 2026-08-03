@@ -1,7 +1,7 @@
 {
   "name": "htninja",
   "version": "1.0.0",
-  "description": "Desktop HTTPS traffic inspector and MITM proxy — Burp Suite-style HTTP History & Proxy Interceptor",
+  "description": "Desktop HTTPS traffic inspector and MITM proxy",
   "main": "main.js",
   "author": "HtNinja",
   "license": "MIT",
