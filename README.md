@@ -91,14 +91,11 @@ It is built for **authorized security testing, debugging, and learning**.
 
 ## Screenshots
 
-> Add screenshots here after publishing (main history, repeater, hold/edit, search).
->
-> Suggested layout:
-> ```md
-> | History | Repeater |
-> |---|---|
-> | ![History](docs/screenshots/history.png) | ![Repeater](docs/screenshots/repeater.png) |
-> ```
+<img width="1397" height="898" alt="1" src="https://github.com/user-attachments/assets/2dfda45f-2fa9-42ad-90f8-33090e1485b3" />
+<img width="1422" height="914" alt="4" src="https://github.com/user-attachments/assets/247ec24e-90fa-4d24-bea6-9cf4688e8c82" />
+<img width="1397" height="905" alt="3" src="https://github.com/user-attachments/assets/20ee5853-a798-49eb-8a71-9a918f25c397" />
+<img width="1292" height="825" alt="2" src="https://github.com/user-attachments/assets/6eaf548d-f922-4490-b76f-ccec90d568de" />
+
 
 ---
 
